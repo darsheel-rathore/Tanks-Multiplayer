@@ -230,6 +230,12 @@
       },
       "url": "https://packages.unity.com"
     },
+    "com.veriorpies.parrelsync": {
+      "version": "file:D:/Assets/ParrelSync-master/ParrelSync-master/ParrelSync",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {}
+    },
     "nuget.mono-cecil": {
       "version": "1.0.0",
       "depth": 1,
