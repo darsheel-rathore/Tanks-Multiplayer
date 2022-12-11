@@ -21,10 +21,18 @@ namespace Complete
 
         private bool startGame = false;
 
+        #region Unity Methods
+
         public override void OnEnable()
         {
             base.OnEnable();
             CountdownTimer.OnCountdownTimerHasExpired += TimerExpired;
+        }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
+            CountdownTimer.OnCountdownTimerHasExpired -= TimerExpired;
         }
 
         private void Start()
@@ -41,6 +49,9 @@ namespace Complete
 
             StartCoroutine(StartGameLoop());
         }
+
+        #endregion
+
 
         private IEnumerator StartGameLoop()
         {
