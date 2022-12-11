@@ -8,13 +8,14 @@ using UnityEngine;
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] private TextMeshProUGUI statusText;
-
+    [SerializeField] private int mpLevelIndex;
 
     #region Unity Methods
 
     private void Start()
     {
         PhotonNetwork.ConnectUsingSettings();
+        PhotonNetwork.AutomaticallySyncScene = true;
     }
 
 
@@ -25,13 +26,14 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     #endregion
 
+    
 
     #region Photon Callbacks
 
     public override void OnConnectedToMaster()
     {
         base.OnConnectedToMaster();
-        CreateOrJoinRandomRoom();
+        PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinedRoom()
@@ -40,21 +42,53 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         string nickName = "P_" + Random.Range(0, 1000);
         PhotonNetwork.LocalPlayer.NickName = nickName;
 
-        Debug.Log($"Joined: {PhotonNetwork.CurrentRoom.Name} || as {PhotonNetwork.NickName}");
+        Debug.Log($"Joined: {PhotonNetwork.CurrentRoom.Name} " +
+            $"as {PhotonNetwork.NickName} " +
+            $"in region: {PhotonNetwork.CloudRegion}");
     }
+
+    public override void OnJoinRandomFailed(short returnCode, string message)
+    {
+        base.OnJoinRandomFailed(returnCode, message);
+        Debug.Log($"Joining random failed because: {message}, attempting to create");
+        CreateRoom();
+    }
+
+    public override void OnCreateRoomFailed(short returnCode, string message)
+    {
+        base.OnCreateRoomFailed(returnCode, message);
+        Debug.Log("Creating room failed, trying again.");
+        CreateRoom();
+    }
+
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        base.OnPlayerEnteredRoom(newPlayer);
+        int playerCount = PhotonNetwork.PlayerList.Length;
+
+        if (playerCount > 1)
+        {
+            if (!PhotonNetwork.IsMasterClient) return;
+
+            PhotonNetwork.LoadLevel(mpLevelIndex);
+            PhotonNetwork.CurrentRoom.IsOpen = false;
+        }
+    }
+
 
     #endregion
 
 
     #region Private Methods
 
-    private void CreateOrJoinRandomRoom()
+    private void CreateRoom()
     {
         string roomName = "R_" + Random.Range(0, 1000);
         RoomOptions roomOptions = new RoomOptions()
         {
             IsVisible = true,
-            IsOpen = false,
+            IsOpen = true,
             MaxPlayers = (byte)2
         };
 
