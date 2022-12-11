@@ -1,4 +1,5 @@
 using Photon.Pun;
+using Photon.Pun.UtilityScripts;
 using Photon.Realtime;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,6 +25,8 @@ namespace Complete
         public const string HEALTH_PROP = "healthProp";
 
         private Player thisPlayer;
+
+        public static string GetHealthProp() => HEALTH_PROP;
 
         private void Awake()
         {
@@ -102,6 +105,20 @@ namespace Complete
 
         private void OnDeath()
         {
+            if (this.photonView.IsMine)
+            {
+                Player otherPlayer = null;
+                foreach (var item in PhotonNetwork.PlayerList)
+                {
+                    if (item != thisPlayer)
+                    {
+                        otherPlayer = item;
+                        break;
+                    }
+                }
+                otherPlayer.AddScore(1);
+            }
+
             // Set the flag so that this function is only called once.
             m_Dead = true;
 

@@ -15,11 +15,13 @@ namespace Complete
         [SerializeField] private GameObject tankPrefab;
         [SerializeField] private MPCameraController camRig;
         [SerializeField] private Transform sp1, sp2;
-        [SerializeField] private TankManager[] tankManagers;
+        [SerializeField] private MPTankManager[] tankManagers;
         [SerializeField] private Text messageText;
         [SerializeField] private Text timerText;
 
         private bool startGame = false;
+        private bool roundEnded = false;
+        private Player roundWinner;
 
         #region Unity Methods
 
@@ -57,7 +59,9 @@ namespace Complete
         {
             yield return StartCoroutine(StartRound());
 
-            RoundPlaying();
+            yield return StartCoroutine(RoundPlaying());
+
+            RoundEnding();
         }
 
         private IEnumerator StartRound()
@@ -72,10 +76,56 @@ namespace Complete
             }
         }
 
-        private void RoundPlaying()
+        private IEnumerator RoundPlaying()
         {
             EnablableTankControl();
             messageText.text = "";
+
+            while(!roundEnded)
+            {
+                yield return null;
+            }
+        }
+
+        private void RoundEnding()
+        {
+            DisableTankControl();
+            string message = "Round Ended!";
+            Color winnerColor = GetWinnerColor();
+
+            message += "\n" + "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" + 
+                roundWinner.NickName + "</color> wins the round\n\n";
+            
+            foreach (var item in PhotonNetwork.PlayerList)
+            {
+                //winnerColor = (item.IsLocal) ? Color.red : Color.green;
+
+                message += "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" + 
+                        item.NickName + "</color> - " + item.GetScore() + "\n";
+            }
+
+            messageText.text = message;
+        }
+
+        public override void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
+        {
+            base.OnPlayerPropertiesUpdate(targetPlayer, changedProps);
+
+            // for checking if anyone died
+            if (changedProps.TryGetValue(MPTankHealth.GetHealthProp(), out var value))
+            {
+                float healthValue = (float)value;
+                if (healthValue > 0f) return;
+
+                Debug.Log("One of the tank is dead.");
+                roundEnded = true;
+            }
+
+            // for checking whether anyone gets a score increament
+            if (changedProps.TryGetValue(PunPlayerScores.PlayerScoreProp, out var scoreValue))
+            {
+                roundWinner = targetPlayer;
+            }
         }
 
         private void TimerExpired()
@@ -97,5 +147,21 @@ namespace Complete
         {
             tankManagers[0].EnableControl();
         }
+
+        private Color GetWinnerColor()
+        {
+            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+            foreach (GameObject player in players)
+            {
+                if (player.activeSelf)
+                {
+                    Color realColor = player.GetComponentInChildren<MeshRenderer>().material.color;
+                    return realColor;
+                }
+            }
+
+            return Color.white;
+        }
+
     }
 }
