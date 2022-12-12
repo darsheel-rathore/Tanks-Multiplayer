@@ -57,6 +57,7 @@ namespace Photon.Pun.UtilityScripts
         /// </summary>
         public static event CountdownTimerHasExpired OnCountdownTimerHasExpired;
 
+        public static string messageToShow = "Game";
 
         public void Start()
         {
@@ -84,7 +85,7 @@ namespace Photon.Pun.UtilityScripts
             if (!this.isTimerRunning) return;
 
             float countdown = TimeRemaining();
-            this.Text.text = string.Format("Game starts in {0} seconds", countdown.ToString("n0"));
+            this.Text.text = string.Format(messageToShow + " starts in {0} seconds", countdown.ToString("n0"));
 
             if (countdown > 0.0f) return;
 
@@ -160,6 +161,8 @@ namespace Photon.Pun.UtilityScripts
 
         public static void SetStartTime()
         {
+            Debug.Log("RUNNING>>>");
+
             int startTime = 0;
             bool wasSet = TryGetStartTime(out startTime);
 
