@@ -126,7 +126,6 @@ namespace Complete
 
         public void SetStartPositionAndSize()
         {
-            Debug.Log("Resetting position and size");
 
             // Find the desired position.
             FindAveragePosition();

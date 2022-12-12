@@ -24,6 +24,7 @@ namespace Complete
         private bool roundEnded = false;
         private bool gameOver = false;
         private bool shouldLeave = false;
+        private bool waitBetweenRounds = false;
 
         private int roundsWonByAny = 0;
         private Player roundWinner;
@@ -54,86 +55,19 @@ namespace Complete
 
             tankManagers[0].Setup();
 
+            CountdownTimer.messageToShow = "Game starts";
+
+            if (PhotonNetwork.IsMasterClient)
+                CountdownTimer.SetStartTime();
+
             StartCoroutine(StartGameLoop());
         }
 
         #endregion
 
+        // =======================================
 
-        private IEnumerator StartGameLoop()
-        {
-            yield return StartCoroutine(StartRound());
-
-            yield return StartCoroutine(RoundPlaying());
-
-            RoundEnding();
-
-            // the player will leave the room in round ending
-            // under certain conditions so no need to worry about 
-            // the coroutine.
-            StartCoroutine(StartGameLoop());
-        }
-
-        private IEnumerator StartRound()
-        {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                CountdownTimer.SetStartTime();
-            }
-
-            ResetTank();
-            DisableTankControl();
-            camRig.SetStartPositionAndSize();
-            while(!startGame)
-            {
-                yield return null;
-            }
-        }
-
-        private IEnumerator RoundPlaying()
-        {
-            EnablableTankControl();
-            messageText.text = "";
-
-            while(!roundEnded)
-            {
-                yield return null;
-            }
-        }
-
-        private void RoundEnding()
-        {
-            DisableTankControl();
-            string message = string.Empty;
-            Color winnerColor = GetWinnerColor();
-
-            if (HasAnyoneWonTheMatch())
-            {
-                message = "Match Ended!";
-                message += "\n" + "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
-                    roundWinner.NickName + "</color> wins the match\n\n";
-                StartCoroutine(StartLeavingProcess());
-            }
-            else
-            {
-                message = "Round Ended!";
-
-                message += "\n" + "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
-                    roundWinner.NickName + "</color> wins the round\n\n";
-
-                foreach (var item in PhotonNetwork.PlayerList)
-                {
-                    winnerColor = (item.IsLocal) ? Color.red : Color.green;
-
-                    message += "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
-                            item.NickName + "</color> - " + item.GetScore() + "\n";
-                }
-            }
-
-            CountdownTimer.messageToShow = "Round";
-            startGame = false;
-            messageText.text = message;
-        }
+        #region Photon Callbacks
 
         public override void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
         {
@@ -158,6 +92,119 @@ namespace Complete
             }
         }
 
+        public override void OnLeftRoom()
+        {
+            base.OnLeftRoom();
+            PhotonNetwork.LocalPlayer.CustomProperties.Clear();
+            PhotonNetwork.LoadLevel(0);
+            StopAllCoroutines();
+        }
+
+        public override void OnPlayerLeftRoom(Player otherPlayer)
+        {
+            base.OnPlayerLeftRoom(otherPlayer);
+
+        }
+
+        #endregion
+
+        // =======================================
+
+        #region Game-Loop Methods
+
+        private IEnumerator StartGameLoop()
+        {
+            yield return StartCoroutine(StartRound());
+
+            yield return StartCoroutine(RoundPlaying());
+
+            yield return StartCoroutine(RoundEnding());
+
+            // the player will leave the room in round ending
+            // under certain conditions so no need to worry about 
+            // the coroutine.
+            StartCoroutine(StartGameLoop());
+        }
+
+        private IEnumerator StartRound()
+        {
+            ResetTank();
+            DisableTankControl();
+            camRig.SetStartPositionAndSize();
+
+            while (!startGame)
+                yield return null;
+        }
+
+        private IEnumerator RoundPlaying()
+        {
+            EnablableTankControl();
+            messageText.text = "";
+
+            while (!roundEnded)
+            {
+                yield return null;
+            }
+        }
+
+        private IEnumerator RoundEnding()
+        {
+            DisableTankControl();
+            string message = string.Empty;
+            Color winnerColor = GetWinnerColor();
+
+            if (HasAnyoneWonTheMatch())
+            {
+                message = "Match Ended!";
+                message += "\n" + "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
+                    roundWinner.NickName + "</color> wins the match\n\n";
+
+                CountdownTimer.messageToShow = "Exiting ";
+                GetComponent<CountdownTimer>().Countdown = 5;
+
+                if (PhotonNetwork.IsMasterClient)
+                    CountdownTimer.SetStartTime();
+
+                yield return StartCoroutine(StartLeavingProcess());
+            }
+            else
+            {
+                message = "Round Ended!";
+
+                message += "\n" + "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
+                    roundWinner.NickName + "</color> wins the round\n\n";
+
+                foreach (var item in PhotonNetwork.PlayerList)
+                {
+                    winnerColor = (item.IsLocal) ? Color.red : Color.green;
+
+                    message += "<color=#" + ColorUtility.ToHtmlStringRGB(winnerColor) + ">" +
+                            item.NickName + "</color> - " + item.GetScore() + "\n";
+                }
+            }
+
+            CountdownTimer.messageToShow = "Round starts";
+            startGame = false;
+            roundEnded = false;
+            messageText.text = message;
+
+            GetComponent<CountdownTimer>().Countdown = 4f;
+
+            if (PhotonNetwork.IsMasterClient)
+                CountdownTimer.SetStartTime();
+
+            while (!waitBetweenRounds)
+                yield return null;
+
+            waitBetweenRounds = false;
+        }
+
+        #endregion
+
+        // =======================================
+
+        #region Helpers
+
         private IEnumerator StartLeavingProcess()
         {
             while(!shouldLeave)
@@ -167,16 +214,12 @@ namespace Complete
             PhotonNetwork.LeaveRoom();
         }
 
-        public override void OnLeftRoom()
-        {
-            base.OnLeftRoom();
-            PhotonNetwork.LocalPlayer.CustomProperties.Clear();
-            PhotonNetwork.LoadLevel(0);
-            StopAllCoroutines();
-        }
-
         private void TimerExpired()
         {
+            if (GetComponent<CountdownTimer>().Countdown == 4)
+            {
+                waitBetweenRounds = !waitBetweenRounds;
+            }
             startGame = true;
             shouldLeave = HasAnyoneWonTheMatch();
         }
@@ -217,5 +260,6 @@ namespace Complete
 
         private bool HasAnyoneWonTheMatch() => roundsWonByAny >= roundsToWinMatch;
 
+        #endregion
     }
 }

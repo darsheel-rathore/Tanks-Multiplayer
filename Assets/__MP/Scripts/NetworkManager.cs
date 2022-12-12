@@ -4,11 +4,14 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
-    [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private Text statusText;
     [SerializeField] private int mpLevelIndex;
+
+    [SerializeField] private InputField nickNameText;
 
     #region Unity Methods
 
@@ -26,20 +29,32 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     #endregion
 
-    
+
+    #region Public Callbacks
+
+    public void _BattleBtn()
+    {
+        PhotonNetwork.JoinRandomRoom();
+    }
+
+    #endregion
+
+
 
     #region Photon Callbacks
 
     public override void OnConnectedToMaster()
     {
         base.OnConnectedToMaster();
-        PhotonNetwork.JoinRandomRoom();
     }
 
     public override void OnJoinedRoom()
     {
         base.OnJoinedRoom();
-        string nickName = "P_" + Random.Range(0, 1000);
+
+        string nickName = nickNameText.text;
+
+        nickName = string.IsNullOrEmpty(nickName) ? "P_" + Random.Range(0, 1000) : nickName;
         PhotonNetwork.LocalPlayer.NickName = nickName;
 
         Debug.Log($"Joined: {PhotonNetwork.CurrentRoom.Name} " +

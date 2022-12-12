@@ -85,7 +85,7 @@ namespace Photon.Pun.UtilityScripts
             if (!this.isTimerRunning) return;
 
             float countdown = TimeRemaining();
-            this.Text.text = string.Format(messageToShow + " starts in {0} seconds", countdown.ToString("n0"));
+            this.Text.text = string.Format(messageToShow + " in {0} seconds", countdown.ToString("n0"));
 
             if (countdown > 0.0f) return;
 
@@ -102,9 +102,9 @@ namespace Photon.Pun.UtilityScripts
         private void OnTimerEnds()
         {
             this.isTimerRunning = false;
-            this.enabled = false;
+            //this.enabled = false;
 
-            Debug.Log("Emptying info text.", this.Text);
+            //Debug.Log("Emptying info text.", this.Text);
             this.Text.text = string.Empty;
 
             if (OnCountdownTimerHasExpired != null) OnCountdownTimerHasExpired();
@@ -113,7 +113,7 @@ namespace Photon.Pun.UtilityScripts
 
         public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
         {
-            Debug.Log("CountdownTimer.OnRoomPropertiesUpdate " + propertiesThatChanged.ToStringFull());
+            //Debug.Log("CountdownTimer.OnRoomPropertiesUpdate " + propertiesThatChanged.ToStringFull());
             Initialize();
         }
 
@@ -124,7 +124,7 @@ namespace Photon.Pun.UtilityScripts
             if (TryGetStartTime(out propStartTime))
             {
                 this.startTime = propStartTime;
-                Debug.Log("Initialize sets StartTime " + this.startTime + " server time now: " + PhotonNetwork.ServerTimestamp + " remain: " + TimeRemaining());
+                //Debug.Log("Initialize sets StartTime " + this.startTime + " server time now: " + PhotonNetwork.ServerTimestamp + " remain: " + TimeRemaining());
 
 
                 this.isTimerRunning = TimeRemaining() > 0;
@@ -161,8 +161,6 @@ namespace Photon.Pun.UtilityScripts
 
         public static void SetStartTime()
         {
-            Debug.Log("RUNNING>>>");
-
             int startTime = 0;
             bool wasSet = TryGetStartTime(out startTime);
 
@@ -173,7 +171,7 @@ namespace Photon.Pun.UtilityScripts
             PhotonNetwork.CurrentRoom.SetCustomProperties(props);
 
 
-            Debug.Log("Set Custom Props for Time: "+ props.ToStringFull() + " wasSet: "+wasSet);
+            //Debug.Log("Set Custom Props for Time: "+ props.ToStringFull() + " wasSet: "+wasSet);
         }
     }
 }
