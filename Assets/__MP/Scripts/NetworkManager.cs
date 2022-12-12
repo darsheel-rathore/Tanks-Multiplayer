@@ -13,6 +13,12 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     [SerializeField] private InputField nickNameText;
 
+    [SerializeField] private GameObject loadingAnimation;
+    [SerializeField] private GameObject inputs;
+
+    private bool whetherInRoom = false;
+    private string statusTextValue = string.Empty;
+
     #region Unity Methods
 
     private void Start()
@@ -24,7 +30,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     private void Update()
     {
-        statusText.text = PhotonNetwork.NetworkClientState.ToString();
+        statusTextValue = PhotonNetwork.NetworkClientState.ToString();
+        statusTextValue = whetherInRoom ? statusTextValue + " \nWaiting for 1 more tank to battle!" : statusTextValue;
+
+        statusText.text = statusTextValue;
     }
 
     #endregion
@@ -35,6 +44,11 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public void _BattleBtn()
     {
         PhotonNetwork.JoinRandomRoom();
+
+        // disable input and enable status text
+        statusText.enabled = true;
+        loadingAnimation.SetActive(true);
+        inputs.SetActive(false);
     }
 
     #endregion
@@ -46,10 +60,14 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         base.OnConnectedToMaster();
+        statusText.enabled = false;
+        loadingAnimation.SetActive(false);
+        inputs.SetActive(true);
     }
 
     public override void OnJoinedRoom()
     {
+        whetherInRoom = true;
         base.OnJoinedRoom();
 
         string nickName = nickNameText.text;
@@ -57,22 +75,22 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         nickName = string.IsNullOrEmpty(nickName) ? "P_" + Random.Range(0, 1000) : nickName;
         PhotonNetwork.LocalPlayer.NickName = nickName;
 
-        Debug.Log($"Joined: {PhotonNetwork.CurrentRoom.Name} " +
-            $"as {PhotonNetwork.NickName} " +
-            $"in region: {PhotonNetwork.CloudRegion}");
+        //Debug.Log($"Joined: {PhotonNetwork.CurrentRoom.Name} " +
+        //    $"as {PhotonNetwork.NickName} " +
+        //    $"in region: {PhotonNetwork.CloudRegion}");
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         base.OnJoinRandomFailed(returnCode, message);
-        Debug.Log($"Joining random failed because: {message}, attempting to create");
+        //Debug.Log($"Joining random failed because: {message}, attempting to create");
         CreateRoom();
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
     {
         base.OnCreateRoomFailed(returnCode, message);
-        Debug.Log("Creating room failed, trying again.");
+        //Debug.Log("Creating room failed, trying again.");
         CreateRoom();
     }
 

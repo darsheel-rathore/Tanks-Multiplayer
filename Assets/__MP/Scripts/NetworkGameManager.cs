@@ -165,7 +165,10 @@ namespace Complete
                 if (PhotonNetwork.IsMasterClient)
                     CountdownTimer.SetStartTime();
 
+                messageText.text = message;
+
                 yield return StartCoroutine(StartLeavingProcess());
+                yield break;
             }
             else
             {
@@ -211,6 +214,7 @@ namespace Complete
             {
                 yield return null;
             }
+            StopAllCoroutines();
             PhotonNetwork.LeaveRoom();
         }
 
