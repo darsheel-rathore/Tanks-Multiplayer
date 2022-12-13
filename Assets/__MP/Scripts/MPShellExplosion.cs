@@ -35,7 +35,7 @@ namespace Complete
                     continue;
 
                 // Add an explosion force.
-                targetRigidbody.AddExplosionForce(m_ExplosionForce, transform.position, m_ExplosionRadius);
+                //targetRigidbody.AddExplosionForce(m_ExplosionForce, transform.position, m_ExplosionRadius);
 
                 // Find the TankHealth script associated with the rigidbody.
                 MPTankHealth targetHealth = targetRigidbody.GetComponent<MPTankHealth>();

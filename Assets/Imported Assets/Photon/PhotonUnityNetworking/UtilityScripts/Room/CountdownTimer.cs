@@ -173,5 +173,11 @@ namespace Photon.Pun.UtilityScripts
 
             //Debug.Log("Set Custom Props for Time: "+ props.ToStringFull() + " wasSet: "+wasSet);
         }
+
+        public void StopTimer()
+        {
+            isTimerRunning = false;
+            OnTimerEnds();
+        }
     }
 }

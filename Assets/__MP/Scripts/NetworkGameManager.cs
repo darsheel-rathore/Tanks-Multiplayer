@@ -19,6 +19,7 @@ namespace Complete
         [SerializeField] private MPTankManager[] tankManagers;
         [SerializeField] private Text messageText;
         [SerializeField] private Text timerText;
+        [SerializeField] private GameObject quitButton;
 
         private bool startGame = false;
         private bool roundEnded = false;
@@ -103,8 +104,16 @@ namespace Complete
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
             base.OnPlayerLeftRoom(otherPlayer);
-
+            // stop all coroutine and tiemrs
+            GetComponent<CountdownTimer>().StopTimer();
+            StopAllCoroutines();
+            
+            DisableTankControl();
+            messageText.text = "Other player left! \nYou WON!!!";
+            StartCoroutine(LeaveRoomAfterPlayerLeft());
         }
+
+
 
         #endregion
 
@@ -263,6 +272,23 @@ namespace Complete
         }
 
         private bool HasAnyoneWonTheMatch() => roundsWonByAny >= roundsToWinMatch;
+
+        private IEnumerator LeaveRoomAfterPlayerLeft()
+        {
+            yield return new WaitForSeconds(3f);
+            PhotonNetwork.LeaveRoom();
+        }
+
+        #endregion
+
+
+        #region Public Callbacks
+
+        public void _QuitButton()
+        {
+            quitButton.SetActive(false);
+            PhotonNetwork.LeaveRoom();
+        }
 
         #endregion
     }
